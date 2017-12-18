@@ -67,10 +67,16 @@ fn chapters_from_fiction(fiction: String) -> Vec<String> {
 }
 
 fn chapter_to_html(chapter: &String) -> String {
-    let mut resp = reqwest::get(&format!(
+    let url = &format!(
         "http://royalroadl.com/fiction/chapter/{}",
-        chapter
-    )).unwrap();
+        chapter);
+    let mut respp = reqwest::get(url);
+    while respp.is_err() {
+        respp = reqwest::get(url);
+    }
+    
+    let mut resp = respp.unwrap();
+
     let mut content = String::new();
     resp.read_to_string(&mut content).unwrap();
 
