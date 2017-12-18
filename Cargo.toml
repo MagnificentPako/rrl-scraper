@@ -1,0 +1,11 @@
+[package]
+name = "rrl-scraper"
+version = "0.1.0"
+authors = ["MagnificentPako <my@procrastination.life>"]
+
+[dependencies]
+select = "0.4.2"
+reqwest = "0.8.1"
+wkhtmltopdf = "0.3.0"
+regex = "0.2.3"
+clap = {version = "2.29.0", features=["yaml"] }

@@ -1,0 +1,22 @@
+name: rrl-scraper
+version: "1.0"
+author: Pako <my@procrastination.life>
+about: Scrapes a novel from RRL and saves it as PDF
+
+subcommands:
+    - fiction:
+        about: Downloads a full novel
+        version: "1.0"
+        args:
+            - ID:
+                help: The fiction id
+                required: true
+                index: 1
+    - chapter:
+        about: Downloads a single chapter
+        version: "1.0"
+        args:
+          - ID:
+              help: The chapter id
+              required: true
+              index: 1
