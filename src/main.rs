@@ -17,8 +17,11 @@ struct Metadata {
     author: String,
 }
 
-fn get_metadata(fiction: String) -> Metadata {
-    let mut resp = reqwest::get(&format!("http://royalroadl.com/fiction/{}", fiction)).unwrap();
+fn get_metadata(fiction: String, client: &reqwest::Client) -> Metadata {
+    let mut resp = client
+        .get(&format!("http://royalroadl.com/fiction/{}", fiction))
+        .send()
+        .unwrap();
     let mut content = String::new();
     resp.read_to_string(&mut content).unwrap();
 
@@ -40,8 +43,11 @@ fn get_metadata(fiction: String) -> Metadata {
     }
 }
 
-fn chapters_from_fiction(fiction: String) -> Vec<String> {
-    let mut resp = reqwest::get(&format!("http://royalroadl.com/fiction/{}", fiction)).unwrap();
+fn chapters_from_fiction(fiction: String, client: &reqwest::Client) -> Vec<String> {
+    let mut resp = client
+        .get(&format!("http://royalroadl.com/fiction/{}", fiction))
+        .send()
+        .unwrap();
     let mut content = String::new();
     resp.read_to_string(&mut content).unwrap();
 
@@ -66,15 +72,10 @@ fn chapters_from_fiction(fiction: String) -> Vec<String> {
     output
 }
 
-fn chapter_to_html(chapter: &String) -> String {
-    let url = &format!(
-        "http://royalroadl.com/fiction/chapter/{}",
-        chapter);
-    let mut respp = reqwest::get(url);
-    while respp.is_err() {
-        respp = reqwest::get(url);
-    }
-    
+fn chapter_to_html(chapter: &String, client: &reqwest::Client) -> String {
+    let url = &format!("http://royalroadl.com/fiction/chapter/{}", chapter);
+    let mut respp = client.get(url).send();
+
     let mut resp = respp.unwrap();
 
     let mut content = String::new();
@@ -115,14 +116,14 @@ fn main() {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
 
-    let subname = matches.subcommand_name().unwrap_or("nothing");
+    let client = reqwest::Client::new();
 
     match matches.subcommand() {
         ("fiction", Some(sub_m)) => {
             let fiction: String = sub_m.value_of("ID").unwrap().into();
-            let metadata = get_metadata(fiction.clone());
+            let metadata = get_metadata(fiction.clone(), &client);
             println!("Starting download of [{}]", metadata.title);
-            let chapters = chapters_from_fiction(fiction);
+            let chapters = chapters_from_fiction(fiction, &client);
             let mut pdf_app = PdfApplication::new().expect("failed to create pdf app");
             let mut pdfout = pdf_app
                 .builder()
@@ -135,7 +136,7 @@ fn main() {
                     format!("</br><h2>{}</h2>", metadata.author),
                     chapters
                         .iter()
-                        .map(|c| chapter_to_html(c))
+                        .map(|c| chapter_to_html(c, &client))
                         .fold(String::new(), |acc, c| format!("{}{}", acc, c))
                 ))
                 .expect("failed to build pdf");
@@ -145,7 +146,7 @@ fn main() {
         ("chapter", Some(sub_m)) => {
             let chapter: String = sub_m.value_of("ID").unwrap().into();
             println!("Starting download");
-            let chapter_html = chapter_to_html(&chapter);
+            let chapter_html = chapter_to_html(&chapter, &client);
             let mut pdf_app = PdfApplication::new().expect("failed to create pdf app");
             let mut pdfout = pdf_app
                 .builder()
